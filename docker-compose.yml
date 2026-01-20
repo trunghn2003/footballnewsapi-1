@@ -64,7 +64,3 @@ volumes:
     db-data: ~
     redis-data: ~
 
-networks:
-    default:
-        name: footballnewsapi_default
-        external: true
