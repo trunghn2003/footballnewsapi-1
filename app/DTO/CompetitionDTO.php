@@ -21,8 +21,7 @@ class CompetitionDTO implements \JsonSerializable
         private ?string $emblem,
         private ?AreaDTO $area = null,
         private ?SeasonDTO $season = null
-    ) {
-    }
+    ) {}
 
     public function getId(): int
     {

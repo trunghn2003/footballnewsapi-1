@@ -9,41 +9,45 @@ $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
 $kernel->bootstrap();
 
 $apiKey = env('SOFASCORE_API_KEY', '3ffcbe8639mshed1c7dc03a94db6p16d136jsn775d46322204');
-$date = '2025-08-23';
-$fixtureId = '12437005'; // Known working ID from previous steps (497681 mapped to 12437005)
 
-$endpoints = [
-    // Control test
-    "matches/get-incidents?matchId={$fixtureId}",
+// 1. Search for a team to get an ID
+echo "Searching for Arsenal...\n";
+$searchUrl = "https://sofascore.p.rapidapi.com/teams/search?name=Arsenal";
+try {
+    $response = Http::withHeaders([
+        'x-rapidapi-host' => "sofascore.p.rapidapi.com",
+        "x-rapidapi-key" => $apiKey
+    ])->get($searchUrl);
 
-    // Search tests
-    "teams/search?name=Arsenal",
-    "team/search?name=Arsenal",
-    "search/teams?name=Arsenal",
-    "teams/list?name=Arsenal",
+    if ($response->successful()) {
+        $data = $response->json();
+        $teamId = $data['teams'][0]['id'] ?? null;
+        echo "Found Team ID: $teamId\n";
 
-    // Date lists again with variations
-    "matches/list-by-date?date={$date}",
-    "v1/events/schedule/date?date={$date}",
-];
+        if ($teamId) {
+            // 2. Test Squad Endpoint options
+            $endpoints = [
+                "teams/get-squad?teamId={$teamId}",
+                "team/get-players?teamId={$teamId}",
+                "team/players?teamId={$teamId}"
+            ];
 
-foreach ($endpoints as $ep) {
-    echo "Testing endpoint: $ep\n";
-    $url = "https://sofascore.p.rapidapi.com/" . $ep;
-    try {
-        $response = Http::withHeaders([
-            'x-rapidapi-host' => "sofascore.p.rapidapi.com",
-            "x-rapidapi-key" => $apiKey
-        ])->get($url);
+            foreach ($endpoints as $ep) {
+                echo "Testing: $ep\n";
+                $resp = Http::withHeaders([
+                    'x-rapidapi-host' => "sofascore.p.rapidapi.com",
+                    "x-rapidapi-key" => $apiKey
+                ])->get("https://sofascore.p.rapidapi.com/" . $ep);
 
-        echo "Status: " . $response->status() . "\n";
-        if ($response->successful()) {
-            echo "SUCCESS! Response: " . substr($response->body(), 0, 200) . "...\n";
-        } else {
-            echo "Failed.\n";
+                echo "Status: " . $resp->status() . "\n";
+                if ($resp->successful()) {
+                    echo "Response: " . substr($resp->body(), 0, 500) . "\n";
+                }
+            }
         }
-    } catch (\Exception $e) {
-        echo "Error: " . $e->getMessage() . "\n";
+    } else {
+        echo "Search failed.\n";
     }
-    echo "--------------------------\n";
+} catch (\Exception $e) {
+    echo "Error: " . $e->getMessage() . "\n";
 }

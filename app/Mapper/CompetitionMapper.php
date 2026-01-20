@@ -22,7 +22,9 @@ class CompetitionMapper
             ->forMember('name', fn(Competition $source) => $source->name)
             ->forMember('code', fn(Competition $source) => $source->code)
             ->forMember('type', fn(Competition $source) => $source->type)
-            ->forMember('emblem', fn(Competition $source) => $source->emblem);
+            ->forMember('emblem', fn(Competition $source) => $source->emblem)
+            ->forMember('area', fn(Competition $source) => null)
+            ->forMember('season', fn(Competition $source) => null);
 
         // DTO to Model mapping
         $config->registerMapping(CompetitionDTO::class, Competition::class)

@@ -7,8 +7,19 @@ use Illuminate\Database\Eloquent\Model;
 class Team extends Model
 {
     protected $fillable = [
-        'id', 'area_id', 'name', 'short_name', 'tla', 'crest',
-        'address', 'website', 'founded', 'club_colors', 'venue', 'last_updated'
+        'id',
+        'area_id',
+        'name',
+        'short_name',
+        'tla',
+        'crest',
+        'address',
+        'website',
+        'founded',
+        'club_colors',
+        'venue',
+        'last_updated',
+        'sofascore_id'
     ];
 
     public $incrementing = false;
@@ -43,8 +54,8 @@ class Team extends Model
     public function competitions()
     {
         return $this->belongsToMany(Competition::class, 'team_competition_season')
-                    ->withPivot('season_id')
-                    ->withTimestamps();
+            ->withPivot('season_id')
+            ->withTimestamps();
     }
 
     public function getAllFixtures()
@@ -56,7 +67,7 @@ class Team extends Model
     public function players()
     {
         return $this->belongsToMany(Person::class, 'person_team')
-                    ->withTimestamps();
-                    // ->where('role', 'PLAYER');
+            ->withTimestamps();
+        // ->where('role', 'PLAYER');
     }
 }
