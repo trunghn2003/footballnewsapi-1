@@ -44,6 +44,22 @@ services:
         restart: always
         command: redis-server --appendonly yes
 
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        container_name: phpmyadmin
+        links:
+            - dbmysql
+        environment:
+            PMA_HOST: dbmysql
+            PMA_PORT: 3307
+            PMA_ARBITRARY: 1
+            UPLOAD_LIMIT: 300M
+        ports:
+            - 8081:80
+        restart: always
+        depends_on:
+            - dbmysql
+
 volumes:
     db-data: ~
     redis-data: ~
