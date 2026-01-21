@@ -333,13 +333,16 @@ class FixtureService
                     return $player->is_substitute == 0;
                 })
                 ->sortBy(function ($player) {
-                    list($row, $col) = explode(':', $player->grid_position);
-                    return $row * 100 + $col;
-                })->map(function ($player) {
+                    if (empty($player->grid_position) || !str_contains($player->grid_position, ':')) {
+                        return 9999; // Put at the end if invalid
+                    }
+                    $parts = explode(':', $player->grid_position);
+                    return (int)$parts[0] * 100 + (int)($parts[1] ?? 0);
+                })->values()->map(function ($player) {
                     return [
                         'id' => $player->player_id,
                         'position' => $player->position,
-                        'name' => $player->player->name,
+                        'name' => $player->player->name ?? 'Unknown',
                         'shirt_number' => $player->shirt_number,
                         'is_substitute' => $player->is_substitute,
                         'grid' => $player->grid_position,
@@ -348,11 +351,11 @@ class FixtureService
                 }),
             'sub' => $lineup->lineupPlayers->filter(function ($player) {
                 return $player->is_substitute == 1;
-            })->map(function ($player) {
+            })->values()->map(function ($player) {
                 return [
                     'id' => $player->player_id,
                     'position' => $player->position,
-                    'name' => $player->player->name,
+                    'name' => $player->player->name ?? 'Unknown',
                     'shirt_number' => $player->shirt_number,
                     'is_substitute' => $player->is_substitute,
                     'statistics' => $player->statistics,
