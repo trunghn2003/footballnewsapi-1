@@ -47,7 +47,7 @@ class CompetitionRepository
     }
     public function getByIds(array $ids)
     {
-        // dd($ids);
+        // //dd($ids);
         return Competition::whereIn('id', $ids)->get();
     }
 
@@ -55,7 +55,7 @@ class CompetitionRepository
     {
         return Competition::where('name', $name)->orWhere('code', $name)
             ->with(['area', 'currentSeason'])
-        ->first();
+            ->first();
     }
 
 

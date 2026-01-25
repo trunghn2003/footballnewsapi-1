@@ -16,8 +16,7 @@ class FixtureController extends Controller
 
     public function __construct(
         private FixtureService $fixtureService
-    ) {
-    }
+    ) {}
 
     public function sync(): JsonResponse
     {
@@ -37,6 +36,17 @@ class FixtureController extends Controller
     {
         $userId = auth()->check() ? auth()->id() : null;
         $fixture = $this->fixtureService->getFixtureById($id, $userId);
+        logger($id);
+
+        if (isset($fixture['success']) && $fixture['success'] && isset($fixture['fixture'])) {
+            /** @var \App\DTO\FixtureDTO $fixtureDto */
+            $fixtureDto = $fixture['fixture'];
+            if ($fixtureDto->getStatus() === 'FINISHED') {
+                $this->fixtureService->refreshFixtureData($id);
+                // Refresh fixture data to get latest updates
+                $fixture = $this->fixtureService->getFixtureById($id, $userId);
+            }
+        }
         return $this->successResponse($fixture);
     }
 

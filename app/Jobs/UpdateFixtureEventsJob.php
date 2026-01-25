@@ -47,6 +47,7 @@ class UpdateFixtureEventsJob implements ShouldQueue
             // This method handles fetching from API and saving to DB
             $events = $fixtureService->getEvents($this->fixtureId);
             $fixtureService->getLineups($this->fixtureId);
+            $fixtureService->getFixtureStatistics($this->fixtureId);
 
             Log::info("Finished event and lineup update for fixture ID: {$this->fixtureId}. Events count: " . count($events));
         } catch (\Exception $e) {

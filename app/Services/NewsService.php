@@ -30,7 +30,7 @@ class NewsService
     public function fetchNewsFromApi($competitionId)
     {
         $response = Http::get($this->baseUrl . '/' . $competitionId);
-        // dd($response);
+        // //dd($response);
         try {
             if (!$response->successful()) {
                 throw new \Exception('Failed to fetch news: ' . $response->body());
@@ -61,7 +61,7 @@ class NewsService
             throw $e;
         }
 
-        // dd($response);
+        // //dd($response);
     }
     public function storeNewsFromApi(array $newsArticles, $competitionId)
     {

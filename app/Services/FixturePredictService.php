@@ -92,7 +92,7 @@ class FixturePredictService
                     'error' => $prediction['error'] ?? 'Failed to generate prediction'
                 ];
             }
-             $translator = new GoogleTranslate();
+            $translator = new GoogleTranslate();
             $translator->setSource('en')->setTarget('vi');
 
             // Create and save the prediction
@@ -104,7 +104,7 @@ class FixturePredictService
             foreach ($prediction['key_factors'] as $key => $value) {
                 $string .= $value . "\n";
             }
-            // dd($translator->translate($string));
+            // //dd($translator->translate($string));
             $string = $translator->translate($string);
             $fixturePrediction->key_factors =  $string;
             $fixturePrediction->confidence_level = $prediction['confidence_level'];

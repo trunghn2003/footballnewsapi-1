@@ -22,7 +22,7 @@ class CommentRepository
         DB::beginTransaction();
         try {
             $comment = new Comment();
-            // dd($data);
+            // //dd($data);
             $comment->parent_id = $data['parent_id'] ?? null;
             $comment->content = $data['content'];
             $comment->user_id = $data['user_id'];
@@ -58,7 +58,8 @@ class CommentRepository
             Log::error('Error creating comment: ' . $e->getMessage());
             throw $e;
         }
-    }    public function getCommentsByNews($newsId)
+    }
+    public function getCommentsByNews($newsId)
     {
         return $this->model
             ->where('news_id', $newsId)

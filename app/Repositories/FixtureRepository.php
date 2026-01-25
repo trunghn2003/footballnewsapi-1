@@ -112,7 +112,7 @@ class FixtureRepository
         if (!$homeTeamId) {
             throw new \InvalidArgumentException('Home team ID is required');
         }
-        
+
         $homeTeam = $this->teamRepository->findById($homeTeamId);
         if (!$homeTeam) {
             $homeTeam = $this->teamRepository->updateOrCreateTeam([
@@ -132,7 +132,7 @@ class FixtureRepository
         if (!$awayTeamId) {
             throw new \InvalidArgumentException('Away team ID is required');
         }
-        
+
         $awayTeam = $this->teamRepository->findById($awayTeamId);
         if (!$awayTeam) {
             $awayTeam = $this->teamRepository->updateOrCreateTeam([
@@ -227,11 +227,11 @@ class FixtureRepository
             $query->where('season_id', $filters['season_id']);
         }
         if (isset($filters['recently']) && $filters['recently'] == 1) {
-            // dd(1);
+            // //dd(1);
             if (!isset($filters['competition_id'])) {
                 $query->where('status', 'FINISHED')
-                ->where('utc_date', '<=', now())
-                ->orderBy('utc_date', 'desc');
+                    ->where('utc_date', '<=', now())
+                    ->orderBy('utc_date', 'desc');
             }
         }
 
@@ -265,9 +265,9 @@ class FixtureRepository
                 $q->whereHas('homeTeam', function ($query) use ($filters) {
                     $query->where('name', 'like', '%' . $filters['teamName'] . '%');
                 })
-                ->orWhereHas('awayTeam', function ($query) use ($filters) {
-                    $query->where('name', 'like', '%' . $filters['teamName'] . '%');
-                });
+                    ->orWhereHas('awayTeam', function ($query) use ($filters) {
+                        $query->where('name', 'like', '%' . $filters['teamName'] . '%');
+                    });
             });
         }
 
@@ -275,7 +275,7 @@ class FixtureRepository
         if (isset($filters['teamId'])) {
             $query->where(function ($q) use ($filters) {
                 $q->where('home_team_id', $filters['teamId'])
-                  ->orWhere('away_team_id', $filters['teamId']);
+                    ->orWhere('away_team_id', $filters['teamId']);
             });
         }
 
@@ -320,9 +320,9 @@ class FixtureRepository
                 $q->whereHas('homeTeam', function ($query) use ($filters) {
                     $query->where('name', 'like', '%' . $filters['teamName'] . '%');
                 })
-                ->orWhereHas('awayTeam', function ($query) use ($filters) {
-                    $query->where('name', 'like', '%' . $filters['teamName'] . '%');
-                });
+                    ->orWhereHas('awayTeam', function ($query) use ($filters) {
+                        $query->where('name', 'like', '%' . $filters['teamName'] . '%');
+                    });
             });
         }
 
@@ -500,7 +500,7 @@ class FixtureRepository
 
     public function createOrUpdatev2(array $data, $season_id, $competition_id)
     {
-        // dd($data);
+        // //dd($data);
         $full_time_home_score = null;
         $full_time_away_score = null;
         $half_time_home_score = null;
@@ -699,10 +699,10 @@ class FixtureRepository
                     $query->where('tla', $tlaHome);
                 });
                 $q->WhereHas('awayTeam', function ($query) use ($tlaAway) {
-                        $query->where('tla', $tlaAway);
+                    $query->where('tla', $tlaAway);
                 });
             });
-            $query->where('status', 'FINISHED')
+        $query->where('status', 'FINISHED')
             ->where('utc_date', '<=', now());
 
         return $query->orderBy('utc_date', 'desc')
@@ -722,14 +722,14 @@ class FixtureRepository
                         ->orWhere('short_name', 'like', '%' . $name_home . '%');
                 });
                 $q->WhereHas('awayTeam', function ($query) use ($tlaAway, $away_name) {
-                        $query->where('tla', $tlaAway, $away_name)
-                            ->orWhere('name', 'like', '%' . $tlaAway . '%')
-                            ->orWhere('name', 'like', '%' . $away_name . '%')
-                            ->orWhere('short_name', 'like', '%' . $away_name . '%');
-                        $query->where('tla', $tlaAway);
+                    $query->where('tla', $tlaAway, $away_name)
+                        ->orWhere('name', 'like', '%' . $tlaAway . '%')
+                        ->orWhere('name', 'like', '%' . $away_name . '%')
+                        ->orWhere('short_name', 'like', '%' . $away_name . '%');
+                    $query->where('tla', $tlaAway);
                 });
             });
-            $query->where('status', 'FINISHED')
+        $query->where('status', 'FINISHED')
             ->where('utc_date', '<=', now());
 
         return $query->orderBy('utc_date', 'desc')

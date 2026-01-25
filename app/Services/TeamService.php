@@ -30,7 +30,7 @@ class TeamService
         $this->apiToken = config('services.football_api.token');
     }
 
-     /**
+    /**
      * Sync Premier League teams and players.
      *
      * @return bool
@@ -39,15 +39,15 @@ class TeamService
     {
         set_time_limit(30000000);
         $names = [
-                'PL' => 2021,
-                'CL' => 2001,
-                'FL1' => 2015,
-                // 'WC',
-                'BL1' => 2002,
-                // 'BL2',
-                'SA' => 2019,
-                'PD' => 2014,
-             ];
+            'PL' => 2021,
+            'CL' => 2001,
+            'FL1' => 2015,
+            // 'WC',
+            'BL1' => 2002,
+            // 'BL2',
+            'SA' => 2019,
+            'PD' => 2014,
+        ];
         try {
             foreach ($names as $name => $id1) {
                 $response = Http::withHeaders([
@@ -58,7 +58,7 @@ class TeamService
                     throw new \Exception("API request failed: {$response->status()}");
                 }
                 $data = $response->json();
-                // dd($data);
+                // //dd($data);
 
                 if (empty($data['teams'])) {
                     return false;
@@ -68,7 +68,7 @@ class TeamService
                 DB::transaction(function () use ($data, $id1) {
                     $competition = $this->competitionRepository->findById($id1);
                     $currentSeason = $competition->currentSeason;
-                    // dd($currentSeason);
+                    // //dd($currentSeason);
                     foreach ($data['teams'] as $teamData) {
                         $team = $this->teamRepository->updateOrCreateTeam($teamData);
                         // DB::table('team_competition_season')->updateOrInsert(
@@ -102,7 +102,7 @@ class TeamService
         $competition = $result->competitions()->get();
         $competionDtos = [];
         foreach ($competition as $item) {
-                    $competionDtos[] = $this->competitionMapper->toDTO($item);
+            $competionDtos[] = $this->competitionMapper->toDTO($item);
         }
         $players = $result->players()->get();
 
@@ -158,12 +158,12 @@ class TeamService
         if (!$user) {
             return false;
         }
-        // dd($user);
+        // //dd($user);
         $favoriteTeams = $user->favourite_teams;
         if (!is_array($favoriteTeams)) {
             $favoriteTeams = json_decode($favoriteTeams, true) ?? [];
         }
-        // dd($favoriteTeams);
+        // //dd($favoriteTeams);
         if (!in_array($teamId, $favoriteTeams)) {
             $favoriteTeams[] = $teamId;
             $user->favourite_teams = $favoriteTeams;
@@ -203,7 +203,7 @@ class TeamService
             ];
         }
         return [
-            'teams' => $data->items() ,
+            'teams' => $data->items(),
             'meta' => [
                 'current_page' => $data->currentPage(),
                 'per_page' => $data->perPage(),
@@ -229,7 +229,7 @@ class TeamService
             ];
         }
         return [
-            'teams' => $result ,
+            'teams' => $result,
         ];
     }
 

@@ -32,7 +32,7 @@ foreach ($endpoints as $ep) {
         echo "Status: " . $response->status() . "\n";
         if ($response->successful()) {
             echo "SUCCESS! Response: " . substr($response->body(), 0, 200) . "...\n";
-            // dd($response->json());
+            // //dd($response->json());
         } else {
             echo "Failed.\n";
         }

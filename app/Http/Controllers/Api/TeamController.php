@@ -16,8 +16,7 @@ class TeamController extends Controller
 
     public function __construct(
         private TeamService $teamService
-    ) {
-    }
+    ) {}
 
     /**
      * Trigger competition sync
@@ -42,7 +41,7 @@ class TeamController extends Controller
     public function addFavoriteTeam(int $teamId): JsonResponse
     {
         $result = $this->teamService->addFavoriteTeam($teamId);
-        // dd($result);
+        // //dd($result);
         if (!$result) {
             return $this->errorResponse('Failed to add favorite team');
         }
@@ -79,7 +78,7 @@ class TeamController extends Controller
 
     public function getFavoriteTeams(): JsonResponse
     {
-        // dd(1);
+        // //dd(1);
         $result = $this->teamService->getFavoriteTeams();
         if (!$result) {
             return $this->errorResponse('No favorite teams found');

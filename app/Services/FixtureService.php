@@ -88,7 +88,7 @@ class FixtureService
                 }
 
                 $datas = $response->json()['matches'];
-                // dd($datas);
+                // //dd($datas);
 
                 DB::beginTransaction();
 
@@ -97,7 +97,7 @@ class FixtureService
                         if (isset($data['homeTeam']) && isset($data['awayTeam'])) {
                             try {
                                 $fixture = $this->fixtureRepository->createOrUpdate($data);
-                                // dd($fixture);
+                                // //dd($fixture);
                                 if ($fixture->wasRecentlyCreated) {
                                 } else if ($fixture->wasChanged()) {
                                     // Check if score has changed
@@ -368,7 +368,7 @@ class FixtureService
         $filters['recently'] = 1;
         $fixtures = $this->fixtureRepository->getFixtures($filters, $perPage, $page, 1);
         if (isset($fixtures) && count($fixtures) > 0)
-            // dd($fixtures->items());
+            // //dd($fixtures->items());
             return [
                 'fixtures' => array_map(function ($fixture) use ($userId) {
                     $competition = $this->competitionService->getCompetitionById($fixture->competition_id);
@@ -450,7 +450,7 @@ class FixtureService
     }
     public function getRecentFixturesByTeam(int $teamId, int $limit = 5, ?int $userId = null): array
     {
-        // dd(1);
+        // //dd(1);
         $fixtures = $this->fixtureRepository->getFixturesRecent([
             'teamId' => $teamId,
             'status' => 'FINISHED'
@@ -498,7 +498,7 @@ class FixtureService
     }
     public function getUpcomingFixturesByTeam(int $teamId, $filter, ?int $userId = null): array
     {
-        // dd($teamId);
+        // //dd($teamId);
         $fixtures = $this->fixtureRepository->getFixtures([
             'teamId' => $teamId,
             'status' => 'SCHEDULED',
@@ -890,13 +890,13 @@ class FixtureService
                         'x-rapidapi-host' => "v3.football.api-sports.io",
                         "x-rapidapi-key" => "594e036ead58fc9a6ccf22f6ac50cd5f"
                     ])->get("https://v3.football.api-sports.io/fixtures?league={$name}&season={$year}");
-                    // dd($response->json());
+                    // //dd($response->json());
                     if (!$response->successful()) {
                         throw new \Exception("API request failed: {$response->status()}");
                     }
 
                     $datas = $response->json()['response'];
-                    // dd($response->json());
+                    // //dd($response->json());
 
                     DB::beginTransaction();
 
@@ -904,9 +904,9 @@ class FixtureService
                         $competition = $this->competitionService->getCompetitionById($id);
                         $season = $this->seasonRepository->getByCompetitionAndYear($id, $year);
 
-                        //                        dd($season);
+                        //                        //dd($season);
                         foreach ($datas as $data) {
-                            //                            dd($data);
+                            //                            //dd($data);
                             $fixture = $this->fixtureRepository->createOrUpdatev2($data, $season->id, $id);
                         }
                     }
@@ -947,19 +947,19 @@ class FixtureService
             ])->get("https://sofascore.p.rapidapi.com/tournaments/get-last-matches?tournamentId={$data['season']}&seasonId={$data['id']}&pageIndex=0");
             Log::info("Response: {$response->status()} - Name: {$name} - Season ID: {$data['season']} - Competition ID: {$data['id']}");
             $competition_id = $data['competition_id'];
-            // dd($response->json());
+            // //dd($response->json());
             if (!$response->successful()) {
                 throw new \Exception("API request failed: {$response->status()}");
             }
 
             $datas = $response->json()['events'];
-            // dd($response->json());
+            // //dd($response->json());
 
             DB::beginTransaction();
 
             if (isset($datas) && is_array($datas)) {
                 foreach ($datas as $d) {
-                    // dd($d);
+                    // //dd($d);
                     // $d = $d['events'];
                     $tla_home = $d['homeTeam']['nameCode'];
                     $tla_away = $d['awayTeam']['nameCode'];
@@ -1126,7 +1126,7 @@ class FixtureService
         try {
             $response = Http::withHeaders([
                 'x-rapidapi-host' => "sofascore.p.rapidapi.com",
-                "x-rapidapi-key" => '3ffcbe8639mshed1c7dc03a94db6p16d136jsn775d46322204'
+                "x-rapidapi-key" => '32671b22d9mshba296f55daa3dfap16a5e9jsnef1aa71491bb'
             ])->get("https://sofascore.p.rapidapi.com/matches/get-statistics?matchId={$fixture->id_fixture}");
 
             if (!$response->successful()) {
@@ -1206,7 +1206,7 @@ class FixtureService
                                 'person_id' => $person->id,
                                 'team_id' => $fixture->home_team_id,
                             ]);
-                            // dd(($player['player']['statistics']));
+                            // //dd(($player['player']['statistics']));
 
                             // Create or update lineup player
                             $this->lineUpPlayerRepository->updateOrCreate(
@@ -1706,6 +1706,76 @@ class FixtureService
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("Error saving events: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * Attempt to find and map Sofascore ID for a fixture
+     *
+     * @param Fixture $fixture
+     * @return bool
+     */
+    public function findAndMapFixtureId($fixture)
+    {
+        if ($fixture->id_fixture) return true;
+
+        $homeName = $fixture->homeTeam->name ?? 'Unknown';
+        if ($homeName === 'Unknown') return false;
+
+        $apiKey = env('SOFASCORE_API_KEY', '3ffcbe8639mshed1c7dc03a94db6p16d136jsn775d46322204');
+        $headers = [
+            'x-rapidapi-host' => "sofascore.p.rapidapi.com",
+            "x-rapidapi-key" => $apiKey
+        ];
+
+        try {
+            // 1. Search for Home Team
+            $response = Http::withHeaders($headers)->get("https://sofascore.p.rapidapi.com/teams/search", ['name' => $homeName]);
+            if (!$response->successful()) return false;
+
+            $teams = $response->json('teams');
+            //dd($teams);
+            if (empty($teams)) return false;
+
+            $sofascoreTeamId = $teams[0]['id'];
+
+            // 2. Get Matches for Team
+            $matchesResponse = Http::withHeaders($headers)->get("https://sofascore.p.rapidapi.com/teams/get-last-matches", ['teamId' => $sofascoreTeamId]);
+            if (!$matchesResponse->successful()) return false;
+
+            $events = $matchesResponse->json('events');
+            if (empty($events)) return false;
+
+            // 3. Match with Fixture Date
+            $fixtureDate = $fixture->utc_date->format('Y-m-d');
+
+            foreach ($events as $event) {
+                if (isset($event['startTimestamp'])) {
+                    $eventDateObj = \Carbon\Carbon::createFromTimestamp($event['startTimestamp'], 'UTC');
+                    $eventDate = $eventDateObj->format('Y-m-d');
+
+                    if ($eventDate == $fixtureDate || $eventDateObj->diffInDays($fixture->utc_date) <= 1) {
+                        $fixture->id_fixture = $event['id'];
+                        $fixture->save();
+                        return true;
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            dd($e->getMessage());
+            Log::error("Error finding fixture ID: " . $e->getMessage());
+        }
+
+        return false;
+    }
+
+    public function refreshFixtureData($fixtureId)
+    {
+        $fixture = $this->fixtureRepository->findById($fixtureId);
+        if (!$fixture) return;
+
+        if (!$fixture->id_fixture) {
+            $this->findAndMapFixtureId($fixture);
         }
     }
 }

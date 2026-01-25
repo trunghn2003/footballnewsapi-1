@@ -25,7 +25,7 @@ class NotificationController extends Controller
     public function sendPushNotification(Request $request)
     {
         $user = User::find(14);
-        // dd(1);
+        // //dd(1);
         $title = "Match Reminder";
         $message = "Your match is starting soon!";
         $matchTime = "2023-10-01 15:00:00"; // Example match time
@@ -34,23 +34,23 @@ class NotificationController extends Controller
             ->setTimezone('Asia/Kolkata')
             ->format('Y-m-d H:i:s');
 
-         $result = $this->sendNotification(
-             $user->fcm_token,
-             $title,
-             $message,
-             [
-                    'title' => $title,
-                    'message' => $message,
-                    'match_time' => $matchTime,
-                    'type' => 'match_reminders',
-                    'user_id' => $user->id,
-                    'logo' => $match->homeTeam->crest ?? null,
-                ]
-         );
-           return response()->json([
-                'message' => 'Notification sent successfully',
-                'result' => $result,
-            ]);
+        $result = $this->sendNotification(
+            $user->fcm_token,
+            $title,
+            $message,
+            [
+                'title' => $title,
+                'message' => $message,
+                'match_time' => $matchTime,
+                'type' => 'match_reminders',
+                'user_id' => $user->id,
+                'logo' => $match->homeTeam->crest ?? null,
+            ]
+        );
+        return response()->json([
+            'message' => 'Notification sent successfully',
+            'result' => $result,
+        ]);
     }
 
     public function getNotifications()

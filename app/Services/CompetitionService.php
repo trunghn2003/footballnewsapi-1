@@ -217,7 +217,7 @@ class CompetitionService
             if (!is_array($favouriteCompetitions)) {
                 $favouriteCompetitions = json_decode($favouriteCompetitions, true) ?? [];
             }
-            // dd($favouriteCompetitions);
+            // //dd($favouriteCompetitions);
             if (!in_array($competition->id, $favouriteCompetitions)) {
                 $favouriteCompetitions[] = $competition->id;
                 $user->favourite_competitions = $favouriteCompetitions;
@@ -241,7 +241,7 @@ class CompetitionService
                 $favouriteCompetitions = json_decode($favouriteCompetitions, true) ?? [];
             }
 
-            // dd($favouriteCompetitions);
+            // //dd($favouriteCompetitions);
             $competitions = $this->competitionRepository->getByIds($favouriteCompetitions);
             $result = [];
             foreach ($competitions as $competition) {

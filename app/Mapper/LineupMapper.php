@@ -19,12 +19,12 @@ class LineupMapper
 
     public function toDTO(Lineup $lineup): LineupDTO
     {
-//        dd($lineup->lineupPlayers);
+        //        //dd($lineup->lineupPlayers);
         $players = $lineup->lineupPlayers->map(function (LineupPlayer $player) {
             $person = $this->personRepository->findById($player->player_id);
-//            dd($player);
+            //            //dd($player);
             return new LineupPlayerDTO(
-//                $player->id,
+                //                $player->id,
                 $player->lineup_id,
                 $player->player_id,
                 $player->position,
