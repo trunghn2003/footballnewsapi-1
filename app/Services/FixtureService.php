@@ -1152,268 +1152,7 @@ class FixtureService
     }
 
 
-    public function saveLineupFromApi($fixtureId, $lineupData)
-    {
-        try {
-            DB::beginTransaction();
 
-            // Get fixture to get correct team IDs
-            $fixture = $this->fixtureRepository->findById($fixtureId);
-            if (!$fixture) {
-                throw new \Exception("Fixture not found");
-            }
-
-            // Save home team lineup
-            if (isset($lineupData['home'])) {
-                $homeLineup = $this->lineupRepository->create([
-                    'fixture_id' => $fixtureId,
-                    'team_id' => $fixture->home_team_id,
-                    'formation' => $lineupData['home']['formation'] ?? null
-                ]);
-
-                // Process home team starting XI
-                $positionCounters = [
-                    'G' => 0,
-                    'D' => 0,
-                    'M' => 0,
-                    'F' => 0
-                ];
-
-                foreach ($lineupData['home']['players'] as $player) {
-                    if (!$player['substitute']) {
-                        $positionType = $player['position'];
-                        if ($positionType) {
-                            $positionCounters[$positionType]++;
-                            $positionNumber = $this->getPositionNumber($positionType, $positionCounters[$positionType]);
-
-                            // Find or create person
-                            $person = $this->personRepository->findByName($player['player']['name']);
-                            if (!$person) {
-                                $id = $this->personRepository->genAutoId();
-                                $person = $this->personRepository->create([
-                                    'id' => $id,
-                                    'name' => $player['player']['name'],
-                                    'type' => 'player',
-                                    'nationality' => $player['player']['country']['name'] ?? null,
-                                    'date_of_birth' => isset($player['player']['dateOfBirthTimestamp']) ?
-                                        date('Y-m-d', $player['player']['dateOfBirthTimestamp']) : null,
-                                    'last_updated' => now()
-                                ]);
-                            }
-
-                            // Create or update person_team relationship
-                            $this->personRepository->createOrUpdatePersonTeam([
-                                'person_id' => $person->id,
-                                'team_id' => $fixture->home_team_id,
-                            ]);
-                            // //dd(($player['player']['statistics']));
-
-                            // Create or update lineup player
-                            $this->lineUpPlayerRepository->updateOrCreate(
-                                [
-                                    'lineup_id' => $homeLineup->id,
-                                    'player_id' => $person->id
-                                ],
-                                [
-                                    'position' => $person->position ?? null,
-                                    'grid_position' => $positionNumber,
-                                    'shirt_number' => $player['player']['jerseyNumber'] ?? 0,
-                                    'is_substitute' => false,
-                                    'statistics' => ($player['statistics']),
-                                    'last_updated' => now()
-                                ]
-                            );
-                        }
-                    }
-                }
-
-                // Process home team substitutes
-                $positionCounters = [
-                    'G' => 0,
-                    'D' => 0,
-                    'M' => 0,
-                    'F' => 0
-                ];
-
-                foreach ($lineupData['home']['players'] as $player) {
-                    if ($player['substitute']) {
-                        $positionType = $player['position'];
-                        if ($positionType) {
-                            $positionCounters[$positionType]++;
-                            $positionNumber = $this->getPositionNumber($positionType, $positionCounters[$positionType]);
-
-                            // Find or create person
-                            $person = $this->personRepository->findByName($player['player']['name']);
-                            if (!$person) {
-                                $id = $this->personRepository->genAutoId();
-                                $person = $this->personRepository->create([
-                                    'id' => $id,
-                                    'name' => $player['player']['name'],
-                                    'type' => 'player',
-                                    'nationality' => $player['player']['country']['name'] ?? null,
-                                    'date_of_birth' => isset($player['player']['dateOfBirthTimestamp']) ?
-                                        date('Y-m-d', $player['player']['dateOfBirthTimestamp']) : null,
-                                    'last_updated' => now(),
-
-                                ]);
-                            }
-
-                            // Create or update person_team relationship
-                            $this->personRepository->createOrUpdatePersonTeam([
-                                'person_id' => $person->id,
-                                'team_id' => $fixture->home_team_id,
-                            ]);
-
-                            // Create or update lineup player
-                            $this->lineUpPlayerRepository->updateOrCreate(
-                                [
-                                    'lineup_id' => $homeLineup->id,
-                                    'player_id' => $person->id
-                                ],
-                                [
-                                    'position' => $person->position ?? null,
-                                    'grid_position' => null,
-                                    'shirt_number' => $player['player']['jerseyNumber'] ?? 0,
-                                    'is_substitute' => true,
-                                    'last_updated' => now(),
-                                    'statistics' => ($player['statistics']) ?? null,
-
-                                ]
-                            );
-                        }
-                    }
-                }
-            }
-
-            // Save away team lineup
-            if (isset($lineupData['away'])) {
-                $awayLineup = $this->lineupRepository->create([
-                    'fixture_id' => $fixtureId,
-                    'team_id' => $fixture->away_team_id,
-                    'formation' => $lineupData['away']['formation'] ?? null
-                ]);
-
-                // Process away team starting XI
-                $positionCounters = [
-                    'G' => 0,
-                    'D' => 0,
-                    'M' => 0,
-                    'F' => 0
-                ];
-
-                foreach ($lineupData['away']['players'] as $player) {
-                    if (!$player['substitute']) { // Fixed condition to only process starting XI players
-                        $positionType = $player['position'];
-                        if ($positionType) {
-                            $positionCounters[$positionType]++;
-                            $positionNumber = $this->getPositionNumber($positionType, $positionCounters[$positionType]);
-
-                            // Find or create person
-                            $person = $this->personRepository->findByName($player['player']['name']);
-                            if (!$person) {
-                                $id = $this->personRepository->genAutoId();
-                                $person = $this->personRepository->create([
-                                    'id' => $id,
-                                    'name' => $player['player']['name'],
-                                    'type' => 'player',
-                                    'nationality' => $player['player']['country']['name'] ?? null,
-                                    'date_of_birth' => isset($player['player']['dateOfBirthTimestamp']) ?
-                                        date('Y-m-d', $player['player']['dateOfBirthTimestamp']) : null,
-                                    'last_updated' => now()
-                                ]);
-                            }
-
-                            // Create or update person_team relationship
-                            $this->personRepository->createOrUpdatePersonTeam([
-                                'person_id' => $person->id,
-                                'team_id' => $fixture->away_team_id,
-                            ]);
-
-                            // Create or update lineup player
-                            $this->lineUpPlayerRepository->updateOrCreate(
-                                [
-                                    'lineup_id' => $awayLineup->id,
-                                    'player_id' => $person->id
-                                ],
-                                [
-                                    'position' => $person->position ?? null,
-                                    'grid_position' => $positionNumber,
-                                    'shirt_number' => $player['player']['jerseyNumber'] ?? 0,
-                                    'is_substitute' => false,
-                                    'last_updated' => now(),
-                                    'statistics' => ($player['statistics']) ?? null,
-
-                                ]
-                            );
-                        }
-                    }
-                }
-
-                // Process away team substitutes
-                $positionCounters = [
-                    'G' => 0,
-                    'D' => 0,
-                    'M' => 0,
-                    'F' => 0
-                ];
-
-                foreach ($lineupData['away']['players'] as $player) {
-                    if ($player['substitute']) {
-                        $positionType = $player['position'];
-                        if ($positionType) {
-                            $positionCounters[$positionType]++;
-                            $positionNumber = $this->getPositionNumber($positionType, $positionCounters[$positionType]);
-
-                            // Find or create person
-                            $person = $this->personRepository->findByName($player['player']['name']);
-                            if (!$person) {
-                                $id = $this->personRepository->genAutoId();
-                                $person = $this->personRepository->create([
-                                    'id' => $id,
-                                    'name' => $player['player']['name'],
-                                    'type' => 'player',
-                                    'nationality' => $player['player']['country']['name'] ?? null,
-                                    'date_of_birth' => isset($player['player']['dateOfBirthTimestamp']) ?
-                                        date('Y-m-d', $player['player']['dateOfBirthTimestamp']) : null,
-                                    'last_updated' => now()
-                                ]);
-                            }
-
-                            // Create or update person_team relationship
-                            $this->personRepository->createOrUpdatePersonTeam([
-                                'person_id' => $person->id,
-                                'team_id' => $fixture->away_team_id,
-                            ]);
-
-                            // Create or update lineup player
-                            $this->lineUpPlayerRepository->updateOrCreate(
-                                [
-                                    'lineup_id' => $awayLineup->id,
-                                    'player_id' => $person->id
-                                ],
-                                [
-                                    'position' => $person->position ?? null,
-                                    'grid_position' => null, // Substitutes don't have grid positions
-                                    'shirt_number' => $player['player']['jerseyNumber'] ?? 0,
-                                    'is_substitute' => true,
-                                    'last_updated' => now(),
-                                    'statistics' => ($player['statistics']) ?? null,
-
-                                ]
-                            );
-                        }
-                    }
-                }
-            }
-
-            DB::commit();
-            return true;
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error("Error saving lineup from API for fixture {$fixtureId}: " . $e->getMessage());
-            throw $e;
-        }
-    }
 
 
     private function getPositionNumber($positionType, $counter)
@@ -1447,7 +1186,8 @@ class FixtureService
             if ($response->successful()) {
                 $data = $response->json();
                 if (isset($data['confirmed'])) {
-                    $this->saveLineupFromApi($fixtureId, $data);
+                    // Use standard method to avoid duplicates and ensure clean state
+                    $this->saveLineupsFromApi($fixtureId, $data);
 
                     $fixture = $this->fixtureRepository->findById($fixtureId);
                 }
@@ -1553,28 +1293,67 @@ class FixtureService
 
                     if (!$teamId) continue;
 
+                    $formationStr = $teamData['formation'] ?? 'Unknown';
+
                     $lineup = Lineup::create([
                         'fixture_id' => $fixtureId,
                         'team_id' => $teamId,
-                        'formation' => $teamData['formation'] ?? 'Unknown',
+                        'formation' => $formationStr,
                     ]);
 
                     $players = isset($teamData['players']) ? $teamData['players'] : [];
-                    foreach ($players as $pData) {
-                        $this->saveLineupPlayer($lineup->id, $pData, false);
+                    // Merge subs if they are in a separate array, just in case
+                    if (isset($teamData['substitutes']) && is_array($teamData['substitutes'])) {
+                        $players = array_merge($players, $teamData['substitutes']);
                     }
 
-                    // Substitutes? Usually separate array or strict player list. 
-                    // Inspecting Sofascore response structure: usually 'players' has all or separate 'substitutes'
-                    // Based on typical structure: 'players' (start XI) and 'substitutes'
-                    // If user sample doesn't show lineups, we assume standard structure.
-                    // Checking typical API: often inside 'players' they have 'substitute': boolean.
-                    // Or separate 'substitutes' array.
-                    // Let's assume there might be a 'substitutes' key as well.
-                    if (isset($teamData['substitutes'])) {
-                        foreach ($teamData['substitutes'] as $pData) {
-                            $this->saveLineupPlayer($lineup->id, $pData, true);
+                    // Separate starters and subs from main list if mixed
+                    $starters = [];
+                    $substitutes = [];
+
+                    foreach ($players as $pData) {
+                        if (isset($pData['substitute']) && $pData['substitute'] === true) {
+                            $substitutes[] = $pData;
+                        } else {
+                            $starters[] = $pData;
                         }
+                    }
+
+                    // 1. Process Starters with Grid Mapping
+                    $formationTemplate = Formation::getFormation($formationStr);
+
+                    // Group starters by position (G, D, M, F)
+                    $groupedStarters = ['G' => [], 'D' => [], 'M' => [], 'F' => []];
+                    foreach ($starters as $s) {
+                        $pInfo = $s['player'] ?? [];
+                        $pos = $s['position'] ?? ($pInfo['position'] ?? 'M');
+                        if (!isset($groupedStarters[$pos])) $groupedStarters[$pos] = [];
+                        $groupedStarters[$pos][] = $s;
+                    }
+
+                    // Map to Formation Slots
+                    if ($formationTemplate) {
+                        foreach ($formationTemplate as $slot) {
+                            $group = $slot['group']; // e.g., 'D'
+
+                            // Take the next available player for this position group
+                            if (!empty($groupedStarters[$group])) {
+                                $playerToAssign = array_shift($groupedStarters[$group]);
+                                $this->saveLineupPlayer($lineup->id, $playerToAssign, false, $slot['grid']);
+                            }
+                        }
+                    }
+
+                    // Save any remaining starters (fallback if formation mismatch)
+                    foreach ($groupedStarters as $pos => $list) {
+                        foreach ($list as $s) {
+                            $this->saveLineupPlayer($lineup->id, $s, false, null);
+                        }
+                    }
+
+                    // 2. Process Substitutes
+                    foreach ($substitutes as $s) {
+                        $this->saveLineupPlayer($lineup->id, $s, true, null);
                     }
                 }
             }
@@ -1586,17 +1365,15 @@ class FixtureService
         }
     }
 
-    private function saveLineupPlayer($lineupId, $playerData, $isSubstitute)
+    private function saveLineupPlayer($lineupId, $playerData, $isSubstitute, $gridPosition = null)
     {
         if (!isset($playerData['player']['id'])) return;
 
         $pInfo = $playerData['player'];
         $sofascoreId = $pInfo['id'];
+        $stats = $playerData['statistics'] ?? null;
 
         // Find or create Person
-        // Note: Person model uses 'id' as primary key, which should be the external ID (Sofascore/FootballData).
-        // Since we are switching to Sofascore, assume we use Sofascore ID as 'id'.
-        // Check if Person exists by id.
         $person = Person::find($sofascoreId);
         if (!$person) {
             $person = Person::create([
@@ -1606,13 +1383,12 @@ class FixtureService
                 'position' => $pInfo['position'] ?? null,
                 'shirt_number' => $playerData['shirtNumber'] ?? ($pInfo['jerseyNumber'] ?? null),
                 'last_updated' => now(),
-                // fill other available fields
             ]);
         } else {
             // Update if needed
             $person->update([
                 'name' => $pInfo['name'] ?? $person->name,
-                'shirt_number' => $playerData['jerseyNumber'] ?? ($pInfo['jerseyNumber'] ?? $person->shirt_number),
+                'shirt_number' => $playerData['shirtNumber'] ?? ($pInfo['jerseyNumber'] ?? $person->shirt_number),
             ]);
         }
 
@@ -1622,7 +1398,8 @@ class FixtureService
             'position' => $playerData['position'] ?? ($pInfo['position'] ?? null),
             'shirt_number' => $playerData['shirtNumber'] ?? ($pInfo['jerseyNumber'] ?? null),
             'is_substitute' => $isSubstitute,
-            // 'grid_position' mapping if available
+            'grid_position' => $gridPosition,
+            'statistics' => $stats,
         ]);
     }
 
