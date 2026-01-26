@@ -27,7 +27,7 @@ class FixtureDTO implements \JsonSerializable
         string $utcDate,
         string $status,
         int $matchday,
-        string $stage,
+        ?string $stage,
         ?string $group,
         // TeamDTO $homeTeam,
         // TeamDTO $awayTeam,
@@ -67,7 +67,7 @@ class FixtureDTO implements \JsonSerializable
         return $this->matchday;
     }
 
-    public function getStage(): string
+    public function getStage(): ?string
     {
         return $this->stage;
     }

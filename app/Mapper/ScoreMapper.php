@@ -35,7 +35,7 @@ class ScoreMapper
     {
         return new ScoreDTO(
             $data['winner'] ?? null,
-            $data['duration'],
+            $data['duration'] ?? null,
             $data['fullTime'],
             $data['halfTime'],
             $data['extraTime'] ?? null,

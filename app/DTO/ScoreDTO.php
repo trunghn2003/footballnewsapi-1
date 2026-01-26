@@ -14,7 +14,7 @@ class ScoreDTO implements \JsonSerializable
 
     public function __construct(
         ?string $winner,
-        string $duration,
+        ?string $duration,
         array $fullTime,
         array $halfTime,
         array $extraTime,
@@ -33,7 +33,7 @@ class ScoreDTO implements \JsonSerializable
         return $this->winner;
     }
 
-    public function getDuration(): string
+    public function getDuration(): ?string
     {
         return $this->duration;
     }
