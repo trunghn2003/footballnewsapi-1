@@ -41,7 +41,7 @@ class GeminiService
             );
 
 
-            $response = Gemini::generativeModel(ModelType::GEMINI_FLASH)
+            $response = Gemini::generativeModel('models/gemini-2.0-flash')
                 // ->withModel('models/gemini-2.0-flash-lite')
                 ->withSafetySetting($safetySettingDangerousContent)
                 ->withSafetySetting($safetySettingHateSpeech)
@@ -91,6 +91,101 @@ class GeminiService
             return [
                 'success' => false,
                 'error' => $e->getMessage()
+            ];
+        }
+    }
+    /**
+     * Answer a question based on provided context
+     *
+     * @param string $question The user's question
+     * @param string $context The data/context to help answer the question
+     * @return array Response containing the answer
+     */
+    public function answerQuestion(string $question, string $context = ''): array
+    {
+        try {
+            // Configure safety settings (reusing exisiting ones or new ones)
+            $safetySettingDangerousContent = new SafetySetting(
+                category: HarmCategory::HARM_CATEGORY_DANGEROUS_CONTENT,
+                threshold: HarmBlockThreshold::BLOCK_ONLY_HIGH
+            );
+
+            $safetySettingHateSpeech = new SafetySetting(
+                category: HarmCategory::HARM_CATEGORY_HATE_SPEECH,
+                threshold: HarmBlockThreshold::BLOCK_ONLY_HIGH
+            );
+
+            // Configure generation parameters for query answering which might need to be more creative or diverse
+            $generationConfig = new GenerationConfig(
+                maxOutputTokens: 500,
+                temperature: 0.5, // Slightly lower temperature for more factual answers
+                topP: 0.8,
+                topK: 40
+            );
+
+            $prompt = "Context information is below.\n---------------------\n";
+            $prompt .= $context;
+            $prompt .= "\n---------------------\n";
+            $prompt .= "Given the context information and not prior knowledge, answer the query.\n";
+            $prompt .= "Query: " . $question . "\n";
+            $prompt .= "Answer in the same language as the query (likely Vietnamese).";
+
+            $response = Gemini::generativeModel('models/gemini-2.0-flash')
+                ->withSafetySetting($safetySettingDangerousContent)
+                ->withSafetySetting($safetySettingHateSpeech)
+                ->withGenerationConfig($generationConfig)
+                ->generateContent($prompt);
+
+            return [
+                'success' => true,
+                'answer' => $response->text(),
+                'raw_response' => $response->text()
+            ];
+        } catch (\Exception $e) {
+            Log::error("Gemini Chat API error: " . $e->getMessage());
+            return [
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Extract intent and entities from a user query
+     *
+     * @param string $query The user's query
+     * @return array Extracted intent and entities
+     */
+    public function extractIntent(string $query): array
+    {
+        try {
+            $prompt = "Analyze the following user query about football and extract the intent and entities.\n";
+            $prompt .= "Possible intents: 'fixture_schedule' (when is next match, match time), 'match_result' (score, result, who won), 'standings' (rank, table, position), 'team_info', 'player_info', 'prediction' (who will win, predict), 'general_chat'.\n";
+            $prompt .= "Return ONLY a JSON object with this structure: { \"intent\": \"string\", \"entities\": { \"team\": \"string|null\", \"player\": \"string|null\", \"competition\": \"string|null\" } }\n";
+            $prompt .= "Query: " . $query;
+
+            $result = Gemini::generativeModel('models/gemini-2.0-flash')
+                ->generateContent($prompt);
+
+            $text = $result->text();
+
+            // Clean up code blocks if present
+            $text = str_replace(['```json', '```'], '', $text);
+
+            $data = json_decode($text, true);
+
+            return [
+                'success' => true,
+                'intent' => $data['intent'] ?? 'general_chat',
+                'entities' => $data['entities'] ?? []
+            ];
+        } catch (\Exception $e) {
+            Log::error("Gemini Intent Extraction error: " . $e->getMessage());
+            // Fallback
+            return [
+                'success' => true,
+                'intent' => 'general_chat',
+                'entities' => []
             ];
         }
     }

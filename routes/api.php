@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\BalanceController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\SearchController;
 use App\Http\Controllers\Api\LiveMatchController;
+use App\Http\Controllers\ChatController;
 
 /*
 |--------------------------------------------------------------------------
@@ -88,7 +89,7 @@ Route::middleware('jwt.auth')->group(function () {
     Route::post('news/{id}/save', [NewsController::class, 'saveNews']);
     Route::delete('news/{id}/save', [NewsController::class, 'unsaveNews']);
     Route::get('news/saved/get', [NewsController::class, 'getSavedNews']);
-Route::get('/news', [NewsController::class, 'getAllNews']);
+    Route::get('/news', [NewsController::class, 'getAllNews']);
 
 
     // Comment routes
@@ -152,4 +153,4 @@ Route::get('/syncFixturesv3', [FixtureController::class, 'syncv3']);
 Route::get('/search', [SearchController::class, 'search']);
 
 Route::get('matches/live', [LiveMatchController::class, 'getLiveMatches']);
-Route::post('/query/chatbot', [FixtureController::class, 'chatbot']);
+Route::post('/query/chatbot', [ChatController::class, 'chat']);
