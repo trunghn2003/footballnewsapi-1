@@ -161,7 +161,8 @@ class GeminiService
         try {
             $prompt = "Analyze the following user query about football and extract the intent and entities.\n";
             $prompt .= "Possible intents: 'fixture_schedule' (when is next match, match time), 'match_result' (score, result, who won), 'standings' (rank, table, position), 'team_info', 'player_info', 'prediction' (who will win, predict), 'general_chat'.\n";
-            $prompt .= "Return ONLY a JSON object with this structure: { \"intent\": \"string\", \"entities\": { \"team\": \"string|null\", \"player\": \"string|null\", \"competition\": \"string|null\" } }\n";
+            $prompt .= "For entities (teams, players, competitions), return a list of possible names/variations to aid search (e.g. if user says 'MU', return ['MU', 'Man Utd', 'Manchester United']).\n";
+            $prompt .= "Return ONLY a JSON object with this structure: { \"intent\": \"string\", \"entities\": { \"teams\": [\"string\"], \"players\": [\"string\"], \"competitions\": [\"string\"] } }\n";
             $prompt .= "Query: " . $query;
 
             $result = Gemini::generativeModel('models/gemini-2.0-flash')
@@ -177,7 +178,11 @@ class GeminiService
             return [
                 'success' => true,
                 'intent' => $data['intent'] ?? 'general_chat',
-                'entities' => $data['entities'] ?? []
+                'entities' => [
+                    'teams' => $data['entities']['teams'] ?? [],
+                    'players' => $data['entities']['players'] ?? [],
+                    'competitions' => $data['entities']['competitions'] ?? []
+                ]
             ];
         } catch (\Exception $e) {
             Log::error("Gemini Intent Extraction error: " . $e->getMessage());
